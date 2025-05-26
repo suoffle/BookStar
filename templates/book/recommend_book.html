@@ -94,7 +94,11 @@
         </div>
 
         <!--관련 추천 도서-->
-        <div class="box" id="box1"></div>
+        <div class="box" id="box1">
+            <div id="recommendation-list">
+                <p>추천 결과를 불러오는 중...</p>
+            </div>
+        </div>
         <!--관련되지 않은 추천 도서-->
         <div class="box" id="box2"></div>
 
@@ -107,6 +111,26 @@
         btn1.addEventListener("click", () => {
             box1.style.display = "block";
             box2.style.display = "none";
+
+        fetch("/book/recommend/?user_id=흙속에저바람속에")  // 경로 확인
+        .then(response => response.json())
+        .then(data => {
+            const list = document.getElementById("recommendation-list");
+            list.innerHTML = "";
+            if (data.results) {
+                data.results.forEach((item, idx) => {
+                    const div = document.createElement("div");
+                    div.innerText = `${idx + 1}. ${item[1]} (ID: ${item[0]})`;
+                    list.appendChild(div);
+                });
+            } else {
+                list.innerText = "추천 결과가 없습니다.";
+            }
+        })
+        .catch(error => {
+            document.getElementById("recommendation-list").innerText = "오류 발생";
+            console.error("추천 오류:", error);
+        });
         });
 
         btn2.addEventListener("click", () => {

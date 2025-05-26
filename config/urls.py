@@ -18,6 +18,9 @@ Including another URLconf
 from django.urls import path
 from config.views import feed_search
 from .views import Main, UploadFeed
+from content.views import ToggleLike, ToggleBookmark
+from user.views import ToggleFollow
+from content import views
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
@@ -30,6 +33,10 @@ urlpatterns = [
     path('book/',include('book.urls')),
     path('admin/', admin.site.urls),
     path('search/', feed_search, name='feed_search'),
+    path('api/toggle-like/', ToggleLike.as_view(), name='toggle_like'),
+    path('api/toggle-bookmark/', ToggleBookmark.as_view(), name='toggle_bookmark'),
+    path('content/bookmark', ToggleBookmark.as_view(), name='toggle_bookmark'),
+    path('api/toggle-follow/', ToggleFollow.as_view(), name='toggle-follow'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

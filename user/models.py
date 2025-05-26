@@ -18,13 +18,15 @@ class UserProfileManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def get_by_natural_key(self, email):  # 🔥 로그인 필드가 email이므로 여기 맞춰야 함
+    def get_by_natural_key(self, email):
         return self.get(email=email)
 
-class User(AbstractBaseUser, PermissionsMixin):  # 🔥 관리자 권한 위한 믹스인 추가
+
+class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=30, blank=True, null=True)
     email = models.EmailField(verbose_name="email", max_length=100, unique=True)
     user_id = models.CharField(max_length=30, blank=True, null=True)
+    profile_image=models.TextField(blank=True, null=True)
     thumbnail = models.CharField(max_length=256, default='default_profile.jpg', blank=True, null=True)
 
     is_staff = models.BooleanField(default=False)      # 관리자 페이지 접근 여부
@@ -33,11 +35,23 @@ class User(AbstractBaseUser, PermissionsMixin):  # 🔥 관리자 권한 위한 
 
     objects = UserProfileManager()
 
-    USERNAME_FIELD = 'email'           # 🔥 이메일을 로그인 필드로 설정
-    REQUIRED_FIELDS = ['name']         # createsuperuser 시 받을 추가 필드
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['name']
 
     def __str__(self):
         return self.email
 
     class Meta:
         db_table = 'users'
+
+
+class Follow(models.Model):
+    from_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')  # 로그인한 사람
+    to_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers')    # 팔로우 대상
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('from_user', 'to_user')
+
+    def __str__(self):
+        return f"{self.from_user} → {self.to_user}"

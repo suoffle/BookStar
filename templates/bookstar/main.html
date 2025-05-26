@@ -38,7 +38,7 @@
 
       .right_body {
           {#background-color: #e5e4e4;#}
-          width:300px;
+          width:  350px;
           height: 1000px;
           left: 72%;
           position:fixed
@@ -139,6 +139,9 @@
 
       .feed_like{
           padding: 0px 10px;
+          display: flex;
+          align-items: center;
+          gap: 4px;
       }
 
       .feed_txt{
@@ -244,6 +247,27 @@
           width: 294px;
           border:none;
       }
+
+      .follow-button {
+      display: inline-block;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+      min-width: 60px;
+      color: #0d6efd;
+      border: 1px solid #0d6efd;
+      background-color: white;
+      padding: 4px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .follow-button:hover {
+      background-color: #0d6efd;
+      color: white;
+    }
   </style>
 
 
@@ -267,7 +291,7 @@
           <div class="navbar-nav-items" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center">
               <span id="add_feed" style="cursor: pointer; white-space: nowrap;">새 게시물</span>
               <a href="/book/" class="nav-link" id="book_rec" style="cursor: pointer; white-space: nowrap; text-decoration: none; color: inherit;">도서 추천</a>
-              {% if not request.session.loginCheck %}
+              {% if not user.is_authenticated %}
               <a href="/user/login/" class="nav-link" id="login" style="cursor: pointer; white-space: nowrap; text-decoration: none; color: inherit;">로그인</a>
               <a href="/user/join/" class="nav-link" id="join" style="cursor: pointer; white-space: nowrap; text-decoration: none; color: inherit;">회원가입</a>
               {% else %}
@@ -278,14 +302,13 @@
                     <img class="profile_img" src="https://pbs.twimg.com/media/EvyxjOtU8AU8qSQ.jpg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                   </div>
                 </a>
-                {% endif %}
+
                 <ul class="dropdown-menu dropdown-menu-end" style="margin-top: 5px;">
                   <li><a class="dropdown-item" href="/user/profile/">프로필</a></li>
-                  <li><a class="dropdown-item" href="/user/settings/">설정</a></li>
                   <li><a class="dropdown-item" href="/user/logout/">로그아웃</a></li>
                 </ul>
-
               </div>
+              {% endif %}
           </div>
       </div>
     </nav>
@@ -320,38 +343,37 @@
                 <div class="feed_name">
                     <!--profile-->
                     <div class="profile_box">
-                        <img class="profile_img" src="{{ feed.profile_image}}">
+                        <img class="profile_img" src="{{ feed.user.profile_image}}">
                     </div>
-                    <span class="feed_name_txt"> {{ feed.user_id }} </span>
+                    <span class="feed_name_txt"> {{ feed.user.name }} </span>
                 </div>
                 <!--img-->
-               <img class="feed_img"
+               {% if feed.image %}
+                <img class="feed_img"
                     src="{% if 'http' in feed.image %}{{ feed.image }}{% else %}{% get_media_prefix %}{{ feed.image }}{% endif %}">
+               {% endif %}
 
-               <!--feed_icon-->
+                <!--feed_icon-->
                <div class="feed_icon">
-                   <div style="display: flex; align-items: center;">
-                       <span class="material-icons-outlined"; style="cursor:pointer;">
-                           favorite_border
-                       </span>
-                        <!--feed_like-->
+                   <!--feed_like-->
                        <div class="feed_like">
-                           <p class="feed_txt" style="margin: -5px; line-height: 1;">
-                               <b>좋아요 {{ feed.like_count }} </b>
-                           </p>
+                           <span id="favorite_{{ feed.id }}" feed_id="{{ feed.id }}"
+                              class="favorite material-icons-outlined"
+                              style="cursor: pointer; color:  {% if feed.is_liked %}red{% else %}#acacac{% endif %};">{% if feed.is_liked %}
+                            favorite{% else %}favorite_border{% endif %}</span>
+                           <span class="like-count" id="like-count_{{ feed.id }}">{{ feed.like_count }}</span>
                        </div>
-
-                   </div>
                    <div>
-                       <span class="material-icons-outlined">
-                           turned_in_not
+                       <span id="bookmark_{{ feed.id }}" feed_id="{{ feed.id }}" class="bookmark material-icons-outlined" style="cursor: pointer; color: {% if feed.is_marked %}black{% else %}#acacac{% endif %};">
+                            {% if feed.is_marked %}turned_in{% else %}turned_in_not{% endif %}
                        </span>
+
                    </div>
                </div>
 
                <!--게시물-->
                <div class="feed_content" style="margin-top: 10px">
-                <p class="feed_txt"> <b> {{ feed.user_id }} </b> {{ feed.content }} </p>
+                <p class="feed_txt"> <b> {{ feed.user.name }} </b> {{ feed.content }} </p>
                 </div>
 
            </div>
@@ -383,6 +405,30 @@
             </div>
 
             <div>
+            <!--
+                 {#% for u in recommended_users %#}
+                  {#% if u %#}
+                    <div class="feed_name" style="justify-content: space-between">
+                        <div class="profile_box">
+                            <img class="profile_img" src="{{ u.profile_image }}">
+                        </div>
+                        <div class="name_content">
+                            <span class="feed_name_txt">{{ u.name }}</span>
+                            <span class="name_content_txt">{{ u.email }} 외 팔로워</span>
+                        </div>
+                        <a class="link_txt follow-button" data-user-id="{{ u.id }}">
+                            {% if u.is_following %}언팔로우{% else %}팔로우{% endif %}
+                        </a>
+                    </div>
+                  {#% endif %#}
+                {#% endfor %#}
+            -->
+
+
+
+
+
+
                 <!--recommend_mike-->
                 <div class="feed_name" style="justify-content: space-between">
                     <div class="profile_box">
@@ -393,7 +439,9 @@
                         <span class="feed_name_txt"> Mike </span>
                         <span class="name_content_txt"> BookStar 신규가입</span>
                     </div>
-                    <a class="link_txt">팔로우</a>
+                    <a class="link_txt follow-button" data-user-id="9">
+                        {% if mike.is_following %}언팔로우{% else %}팔로우{% endif %}
+                    </a>
                 </div>
 
                 <!--recommend_sulley-->
@@ -406,7 +454,9 @@
                         <span class="feed_name_txt">sulley</span>
                         <span class="name_content_txt">suoffle 외 3명 팔로우</span>
                     </div>
-                    <a class="link_txt">팔로우</a>
+                    <a class="link_txt follow-button" data-user-id="10">
+                        {% if sulley.is_following %}언팔로우{% else %}팔로우{% endif %}
+                    </a>
                 </div>
 
                 <!--recommend_rose-->
@@ -419,7 +469,9 @@
                         <span class="feed_name_txt">Rose</span>
                         <span class="name_content_txt">boo 외 10명 팔로우</span>
                     </div>
-                    <a class="link_txt">팔로우</a>
+                    <a class="link_txt follow-button" data-user-id="11">
+                        {% if rose.is_following %}언팔로우{% else %}팔로우{% endif %}
+                    </a>
                 </div>
 
                 <!--recommend_company-->
@@ -432,7 +484,9 @@
                         <span class="feed_name_txt">Monsters INC.</span>
                         <span class="name_content_txt">boo 외 10명 팔로우</span>
                     </div>
-                    <a class="link_txt">팔로우</a>
+                    <a class="link_txt follow-button" data-user-id="12">
+                        {% if mosterinc.is_following %}언팔로우{% else %}팔로우{% endif %}
+                    </a>
                 </div>
 
                 <!--recommend_university-->
@@ -445,8 +499,12 @@
                         <span class="feed_name_txt">Monsters Uni.</span>
                         <span class="name_content_txt">Monsters INC. 외 11명 팔로우</span>
                     </div>
-                    <a class="link_txt">팔로우</a>
+                    <a class="link_txt follow-button" data-user-id="13">
+                        {% if monsteruni.is_following %}언팔로우{% else %}팔로우{% endif %}
+                    </a>
                 </div>
+
+
             </div>
         </div>
     </div>
@@ -510,7 +568,24 @@
   <!--javascript-->
     <script>
 
-        //모달 띄우기
+        //CSRF_token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+      //모달 띄우기
         const modal=document.getElementById("modal_add_feed");
         const buttonAddFeed=document.getElementById("add_feed");
         buttonAddFeed.addEventListener("click", e=>{
@@ -533,7 +608,6 @@
                 closeModal();
             });
         });
-
 
         //jquery
         $('.modal_image_upload')
@@ -637,26 +711,109 @@
     document.body.style.overflowY = "visible";
 }
 
-         function writeFeed(fd) {
-            $.ajax({
-                url: "/content/upload",
-                data: fd,
-                method: "POST",
-                processData: false,
-                contentType: false,
-                success: function (data) {
-                    console.log("성공");
-                },
-                error: function (request, status, error) {
-                    console.log("에러");
-                },
-                complete: function() {
-                    console.log("무조건실행");
-                    closeModal();
-                    location.reload();
-                }
-            })
+     function writeFeed(fd) {
+        $.ajax({
+            url: "/content/upload",
+            data: fd,
+            method: "POST",
+            headers: { "X-CSRFToken": csrftoken },
+            processData: false,
+            contentType: false,
+            success: function (data) {
+                console.log("성공");
+            },
+            error: function (request, status, error) {
+                console.log("에러");
+            },
+            complete: function() {
+                console.log("무조건실행");
+                closeModal();
+                location.reload();
+            }
+        })
+    }
+
+    //좋아요 이벤트 처리
+    $(".favorite").click(function (event) {
+    let feed_id = event.target.getAttribute('feed_id');
+    let favorite_id = event.target.id;
+    let favorite_text = $.trim($('#' + favorite_id).html());
+
+    //좋아요 토글
+    if (favorite_text === 'favorite') {
+        $('#' + favorite_id).html('favorite_border');
+    } else {
+        $('#' + favorite_id).html('favorite');
+    }
+
+    $.ajax({
+        url: "/api/toggle-like/",
+        data: {
+            feed_id: feed_id,
+            favorite_text: favorite_text
+        },
+        method: "POST",
+        headers: { "X-CSRFToken": csrftoken },
+        success: function (data) {
+            // 좋아요 숫자 업데이트
+            $('#like-count_' + feed_id).text(data.like_count);
+        },
+        error: function () {
+            console.log("에러");
         }
+        });
+    });
+
+        //bookmark
+        $(".bookmark").click(function (event) {
+        let feed_id = event.target.getAttribute('feed_id');
+        let bookmark_id = event.target.id;
+        let bookmark_text = $.trim($('#' + bookmark_id).html());
+
+        if (bookmark_text == 'bookmark') {
+            $('#' + bookmark_id).html('bookmark_border');
+        } else {
+            $('#' + bookmark_id).html('bookmark');
+        }
+
+        $.ajax({
+            url: "/content/bookmark",
+            method: "POST",
+            headers: { "X-CSRFToken": csrftoken },
+            data: {
+            feed_id: feed_id,
+            },
+            success: function (data) {
+                console.log("북마크 토글 성공");
+            },
+            error: function () {
+                console.log("북마크 토글 에러");
+            }
+        });
+        });
+
+        //follow
+        $(document).on('click', '.follow-button', function () {
+        const btn = $(this);  // 클릭된 버튼
+        const to_user_id = btn.data('user-id');
+
+        $.ajax({
+        url: "/api/toggle-follow/",
+        method: "POST",
+        headers: { "X-CSRFToken": csrftoken },
+        data: { to_user_id: to_user_id },
+        success: function (data) {
+            if(data.message.includes("언팔")){
+                btn.text("팔로우");
+            }else{
+                btn.text("언팔로우");
+            }
+        },
+        error: function () {
+            alert("팔로우 처리 중 오류 발생");
+        }
+        });
+        });
 
         //로그인
         const buttonLogin=document.getElementById("login");
@@ -674,6 +831,23 @@
         const keyword = document.getElementById("searchBox").value;
         window.location.href = `/search/?q=${encodeURIComponent(keyword)}`;
         }
+
+        function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+
 
     </script>
 
